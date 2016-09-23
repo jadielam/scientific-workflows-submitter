@@ -17,6 +17,7 @@ import io.biblia.workflows.manager.WorkflowManager;
 import io.biblia.workflows.definition.parser.WorkflowParser;
 import io.biblia.workflows.definition.parser.WorkflowParseException;
 import io.biblia.workflows.definition.InvalidWorkflowException;
+import io.biblia.workflows.utils.MongoClientBuilder;
 import io.biblia.workflows.definition.Workflow;
 import io.biblia.workflows.ConfigurationKeys;
 import io.biblia.workflows.manager.action.ActionPersistance;
@@ -28,7 +29,7 @@ import io.biblia.workflows.manager.dataset.MongoDatasetPersistance;
  * Hello world!
  *
  */
-public class WorkflowSubmitterApp implements ConfigurationKeys
+public class WorkflowSubmitterApp
 {
 	/**
 	 * Submits a workflow to the database from a json file
@@ -37,7 +38,8 @@ public class WorkflowSubmitterApp implements ConfigurationKeys
 	 */
     public static void main( String[] args )
     {
-        if (args.length != 1) {
+        /**
+    	if (args.length != 1) {
         	System.out.println("Incorrect number of arguments given.");
         	System.out.println("Usage: java WorkflowSubmitterApp <path_to_workflow_json_file>");
         	System.exit(1);
@@ -45,6 +47,9 @@ public class WorkflowSubmitterApp implements ConfigurationKeys
         
         //1. Read the workflow file path
         String filePath = args[0];
+        **/
+        
+    	String filePath = "/Users/dearj019/Documents/workspace/scientific-workflows-examples/example1.json"; 
         String workflowText = null;
         try {
         	workflowText = readFile(filePath);
@@ -70,13 +75,15 @@ public class WorkflowSubmitterApp implements ConfigurationKeys
         //TODO: This is why this application needs to be a server instead in the future
         //Because it is very expensive to reinitialize all this resources each
         //time that I want to submit a workflow.
-        MongoClient mongo = initializeMongoClient();
+        
+        MongoClient mongo = MongoClientBuilder.getMongoClient();
         ActionPersistance aPersistance = new MongoActionPersistance(mongo);
         DatasetPersistance dPersistance = new MongoDatasetPersistance(mongo);
         WorkflowManager manager = new SimpleWorkflowManager(dPersistance, 
         		aPersistance);
         manager.submitWorkflow(workflow);
         mongo.close();
+        
     }
     
     private static String readFile(String filePath) throws IOException {
@@ -85,21 +92,5 @@ public class WorkflowSubmitterApp implements ConfigurationKeys
     	return new String(encoded, Charset.defaultCharset());
     }
     
-    /**
-	 * Creates a MongoClient that supports multithreading.
-	 * @return
-	 */
-	private static MongoClient initializeMongoClient() {
-		String mongo_host = Configuration.getValue(MONGODB_HOST, "192.168.99.100");
-		int mongo_port = Integer.parseInt(Configuration.getValue(MONGODB_PORT, "27017"));
-		MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-		builder.threadsAllowedToBlockForConnectionMultiplier(50000);
-		builder.socketKeepAlive(true);
-		builder.connectionsPerHost(10000);
-		builder.minConnectionsPerHost(2500);
-		MongoClientOptions options = builder.build();
-		
-		MongoClient mongo = new MongoClient(new ServerAddress(mongo_host, mongo_port), options);
-		return mongo;
-	}
+   
 }
