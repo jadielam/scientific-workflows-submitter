@@ -8,6 +8,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 
+import java.io.File;
 import java.io.IOException;
 
 import io.biblia.workflows.Configuration;
@@ -35,8 +36,9 @@ public class WorkflowSubmitterApp
 	 * Submits a workflow to the database from a json file
 	 * that is passed as parameter.
 	 * @param args
+	 * @throws InterruptedException 
 	 */
-    public static void main( String[] args )
+    public static void main( String[] args ) throws InterruptedException
     {
         /**
     	if (args.length != 1) {
@@ -48,42 +50,50 @@ public class WorkflowSubmitterApp
         //1. Read the workflow file path
         String filePath = args[0];
         **/
-        
-    	String filePath = "/Users/dearj019/Documents/workspace/scientific-workflows-examples/example1.json"; 
-        String workflowText = null;
-        try {
-        	workflowText = readFile(filePath);
-        }
-        catch(IOException ex) {
-        	ex.printStackTrace();
-        	System.exit(1);
-        }
-        
-        //2. Parse the text file into a workflow instance
-        WorkflowParser wParser = io.biblia.workflows.definition.parser.v1.WorkflowParser.getInstance();
-        Workflow workflow = null;
-        try{
-        	workflow = wParser.parseWorkflow(workflowText);
-        }
-        catch(WorkflowParseException | InvalidWorkflowException ex) {
-        	ex.printStackTrace();
-        	System.exit(1);
-        }
-        
-        //3. Submit the workflow instance to the workflow Manager.
-        //create a workflow manager and submit the workflow to the workflow manager.
-        //TODO: This is why this application needs to be a server instead in the future
-        //Because it is very expensive to reinitialize all this resources each
-        //time that I want to submit a workflow.
-        
         MongoClient mongo = MongoClientBuilder.getMongoClient();
         ActionPersistance aPersistance = new MongoActionPersistance(mongo);
         DatasetPersistance dPersistance = new MongoDatasetPersistance(mongo);
         WorkflowManager manager = new SimpleWorkflowManager(dPersistance, 
         		aPersistance);
-        manager.submitWorkflow(workflow);
-        mongo.close();
+    
+        String folderPath = "/Users/dearj019/Documents/workspace/scientific-workflows-experiment1/workflows/";
+        int max_number = 0;
         
+        for (int i = 0; i <= max_number; ++i) {
+        	
+        	String filePath = folderPath + "generated_workflow_" + Integer.toString(i);
+        	System.out.println("Submitting " + filePath);
+            String workflowText = null;
+            try {
+            	workflowText = readFile(filePath);
+            }
+            catch(IOException ex) {
+            	ex.printStackTrace();
+            	System.exit(1);
+            }
+            
+            //2. Parse the text file into a workflow instance
+            WorkflowParser wParser = io.biblia.workflows.definition.parser.v1.WorkflowParser.getInstance();
+            Workflow workflow = null;
+            try{
+            	workflow = wParser.parseWorkflow(workflowText);
+            }
+            catch(WorkflowParseException | InvalidWorkflowException ex) {
+            	ex.printStackTrace();
+            	System.exit(1);
+            }
+            
+            //3. Submit the workflow instance to the workflow Manager.
+            //create a workflow manager and submit the workflow to the workflow manager.
+            //TODO: This is why this application needs to be a server instead in the future
+            //Because it is very expensive to reinitialize all this resources each
+            //time that I want to submit a workflow.
+            
+            manager.submitWorkflow(workflow);
+            Thread.sleep(60000);
+        }
+    	
+        mongo.close();
     }
     
     private static String readFile(String filePath) throws IOException {
