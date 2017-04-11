@@ -77,8 +77,6 @@ public class WorkflowSubmitterApp
         }
 
         manager.submitWorkflow(workflow);
-        Thread.sleep(60000);
-        
         mongo.close();
     }
     
